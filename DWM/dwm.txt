@@ -1,0 +1,198 @@
+1. Implementation of Data Warehouse using Dimensional Modeling
+SQL> create table employee_dimensiontable(emp_key int primary key, emp_name
+varchar(10),emp_age int);
+Table created.
+SQL> create table role_dimensiontable(role_key int primary key, role_name varchar(10));
+Table created.
+SQL> create table department_dimensiontable(department_key int primary key,
+department_name varchar(10));
+Table created.
+SQL> create table time_dimensiontable(time_key int primary key, day varchar(10), month
+varchar(10), year int);
+Table created.
+SQL> insert into employee_dimensiontable values(110,'Scania',20);
+1 row created.
+SQL> insert into employee_dimensiontable values(111,'Pudding',21);
+1 row created.
+SQL> insert into role_dimensiontable values(110,'Professor');
+1 row created.
+SQL> insert into role_dimensiontable values(111,'Accountant');
+1 row created.
+SQL> insert into department_dimensiontable values(110,'Finance');
+1 row created.
+SQL> insert into department_dimensiontable values(111,'Marketing');
+1 row created.
+SQL> insert into time_dimensiontable values(111,'Monday','April',2024);
+1 row created.
+SQL> insert into time_dimensiontable values(113,'Tuesday','May',2023);
+1 row created.
+SQL> select * from employee_dimensiontable;
+EMP_KEY EMP_NAME EMP_AGE
+---------- ---------- ----------
+110 Scania 20
+111 Pudding 21
+SQL> select * from role_dimensiontable;
+ROLE_KEY ROLE_NAME
+---------- ----------
+110 Professor
+111 Accountant
+SQL> select * from department_dimensiontable;
+DEPARTMENT_KEY DEPARTMENT
+-------------- ----------
+110 Finance
+111 Marketing
+SQL> select * from time_dimensiontable;
+TIME_KEY DAY MONTH YEAR
+---------- ---------- ---------- ----------
+111 Monday April 2024
+113 Tuesday May 2023
+SQL> create table company_facttable( emp_key int, role_key int,department_key
+int,time_key int, no_of_hours int,no_of_leaves int,fore
+ign key (emp_key) references employee_dimensiontable,foreign key (role_key) references
+role_dimensiontable,foreign key (department_key) references
+department_dimensiontable,foreign key (time_key) references time_dimensiontable);
+Table created.
+SQL> insert into company_facttable values(110,111,110,111,6,7);
+1 row created.
+SQL> select * from company_facttable;
+EMP_KEY ROLE_KEY DEPARTMENT_KEY TIME_KEY NO_OF_HOURS
+NO_OF_LEAVES
+---------- ---------- -------------- ---------- ----------- ------------
+110 111 110 111 6 7
+Analytical queries :
+Show Total Hours Worked by Each Employee
+SQL> select emp_key, SUM(no_of_hours) as Total_number_of_hours from
+company_facttable group by emp_key;
+EMP_KEY TOTAL_NUMBER_OF_HOURS
+---------- ---------------------
+110 6
+Find Total Leaves Taken by Each Role
+SQL> select role_key, SUM(no_of_leaves) as Total_leaves_taken from company_facttable
+group by role_key;
+ROLE_KEY TOTAL_LEAVES_TAKEN
+---------- ------------------
+111 7
+Total Hours Worked in Each Department
+SQL> select department_key, SUM(no_of_hours) as Total_hours_worked from
+company_facttable group by department_key;
+DEPARTMENT_KEY TOTAL_HOURS_WORKED
+-------------- ------------------
+110 6
+List Employees with Their Departments
+SQL> select e.emp_name,d.department_name from employee_dimensiontable e join
+company_facttable c ON e.emp_key = c.emp_key join depart
+ment_dimensiontable d ON c.department_key = d.department_key;
+EMP_NAME DEPARTMENT
+---------- ----------
+Scania Finance
+SQL> select e.emp_name, SUM(no_of_hours) as total_hours_worked from
+employee_dimensiontable e join company_facttable c ON e.emp_key=c.emp_key group by
+e.emp_name;
+Show Total Hours Worked by Each Employee with name
+EMP_NAME TOTAL_HOURS_WORKED
+---------- ------------------
+Scania 6
+2. Implementation of OLAP operations: Slice, Dice, Rollup, Drilldown and Pivot.
+1) Doctor dimension table
+SQL> CREATE TABLE Doctor (
+2 DoctorID INT PRIMARY KEY,
+3 DoctorName VARCHAR(10),
+4 Specialty VARCHAR(20),
+5 Gender varchar(6),
+6 Experience INT);
+Table created.
+2) Patient dimension table
+SQL> CREATE TABLE Patient (
+2 PatientID INT PRIMARY KEY,
+3 PatientName VARCHAR(10),
+4 Age INT,
+5 Gender varchar(6),
+6 MedicalHistory varchar(20));
+Table created.
+3) Medical Records dimension table
+SQL> CREATE TABLE MedicalRecords (
+2 MedicalRecordID INT PRIMARY KEY,
+3 Diagnosis VARCHAR(20),
+4 Treatment VARCHAR(20),
+5 Medication VARCHAR(20),
+6 PatientID INT,
+7 DoctorID INT,
+8 FOREIGN KEY (PatientID) REFERENCES Patient(PatientID),
+9 FOREIGN KEY (DoctorID) REFERENCES Doctor(DoctorID));
+Table created.
+4) Admin dimension table
+SQL> CREATE TABLE Admin (
+2 AdminID INT PRIMARY KEY,
+3 AdminName VARCHAR(10),
+4 Role VARCHAR(15),
+5 Gender varchar(6),
+6 Department VARCHAR(20) );
+Table created.
+5) Hospital fact table
+SQL> CREATE TABLE HospitalVisits (
+2 VisitID INT PRIMARY KEY,
+3 DoctorID INT,
+4 PatientID INT,
+5 MedicalRecordID INT,
+6 AdminID INT,
+7 VisitDate DATE,
+8 Duration INT,
+9 Cost INT,
+10 FOREIGN KEY (DoctorID) REFERENCES Doctor(DoctorID),
+11 FOREIGN KEY (PatientID) REFERENCES Patient(PatientID),
+12 FOREIGN KEY (MedicalRecordID) REFERENCES
+MedicalRecords(MedicalRecordID),
+13 FOREIGN KEY (AdminID) REFERENCES Admin(AdminID) );
+Table created.
+1) How many hospital visits were recorded in the fact table?
+SQL> SELECT COUNT(*) AS TotalVisits FROM HospitalVisits;
+TOTALVISITS
+-----------
+5
+2) What is the total cost of all visits recorded in the fact table?
+SQL> SELECT SUM(Cost) AS TotalCost FROM HospitalVisits;
+TOTALCOST
+----------
+1000
+3) How many unique patients visited the hospital?
+SQL> SELECT COUNT(DISTINCT PatientID) AS UniquePatients FROM HospitalVisits;
+UNIQUEPATIENTS
+--------------
+5
+4) List all the doctors along with their specialties.
+SQL> SELECT DoctorName, Specialty FROM Doctor;
+DOCTORNAME SPECIALTY
+---------- --------------------
+Dr. Alice Cardiologist
+Dr. Bob Neurologist
+Dr. Carol Surgeon
+Dr. David Pediatrician
+Dr. Emily Dermatologist
+5) What is the average duration of hospital visits?
+SQL> SELECT AVG(Duration) AS AverageDuration
+2 FROM HospitalVisits;
+AVERAGEDURATION
+---------------
+45
+6) Show the total cost of visits for each doctor&#39;s specialty, with a grand total for all
+specialties combined
+SQL> SELECT
+2 NVL(d.Specialty, 'Grand Total') AS Specialty,
+2 NVL(d.Specialty, 'Grand Total') AS Specialty,
+3 SUM(hv.Cost) AS TotalCost
+3 SUM(hv.Cost) AS TotalCost
+4 FROM
+4 FROM
+5 HospitalVisits hv
+5 HospitalVisits hv
+6 JOIN
+6 JOIN
+7 Doctor d ON hv.DoctorID = d.DoctorID
+7 Doctor d ON hv.DoctorID = d.DoctorID
+8 GROUP BY
+8 GROUP BY
+9 ROLLUP(d.Specialty)
+9 ROLLUP(d.Specialty)
+10 ORDER BY
+10 ORDER BY
+11 GROUPIN
