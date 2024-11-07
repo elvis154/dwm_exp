@@ -38,7 +38,7 @@ Table created.
 
  
 
-SQL> insert into employee_dimensiontable values(110,'Scania',20); 
+SQL> insert into employee_dimensiontable values(110,'neil',20); 
 
  
 
@@ -110,7 +110,7 @@ SQL> select * from employee_dimensiontable;
 
 ---------- ---------- ---------- 
 
-       110 Scania             20 
+       110 neil             20 
 
        111 Pudding            21 
 
@@ -246,7 +246,7 @@ EMP_NAME   DEPARTMENT
 
 ---------- ---------- 
 
-Scania     Finance 
+neil     Finance 
 
  
 
@@ -266,7 +266,7 @@ EMP_NAME   TOTAL_HOURS_WORKED
 
 ---------- ------------------ 
 
-Scania                      6 
+neil                      6 
 
  
 
