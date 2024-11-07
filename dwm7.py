@@ -1,91 +1,77 @@
-def equal_frequency_binning(data, num_bins): 
+import numpy as np 
 
-    sorted_data = sorted(data) 
+import matplotlib.pyplot as plt 
 
-    bin_size = len(data) // num_bins 
-
-    bins = [sorted_data[i * bin_size: (i + 1) * bin_size] for i in range(num_bins - 1)] 
-
-    bins.append(sorted_data[(num_bins - 1) * bin_size:]) 
-
-    return bins 
+from scipy.cluster.hierarchy import dendrogram, linkage 
 
  
 
-def bin_mean(bins): 
+# Agglomerative clustering (single-linkage) 
 
-    return [sum(b) / len(b) for b in bins] 
+def agglomerative_clustering(X, n_clusters): 
 
- 
+    clusters = [[i] for i in range(len(X))] 
 
-def bin_median(bins): 
-
-    return [sorted(b)[len(b) // 2] for b in bins] 
+    dendrogram_steps = [] 
 
  
 
-def bin_boundary(bins): 
+    # Perform clustering 
 
-    return [(b[0], b[-1]) for b in bins] 
+    while len(clusters) > n_clusters: 
+
+        i, j = min((i, j) for i in range(len(clusters)) for j in range(i + 1, len(clusters))), 
+
+            key=lambda pair: min(abs(X[p] - X[q]) for p in clusters[pair[0]] for q in clusters[pair[1]])) 
+
+        clusters[i].extend(clusters[j]) 
+
+        del clusters[j] 
+
+        dendrogram_steps.append([X[p] for cluster in clusters for p in cluster]) 
+
+    return clusters 
 
  
+
+# Plot the dendrogram 
+
+def plot_dendrogram(X): 
+
+    linked = linkage(np.array(X).reshape(-1, 1), method='single') 
+
+    plt.figure(figsize=(8, 5)) 
+
+    dendrogram(linked, orientation='top', show_leaf_counts=True) 
+
+    plt.xlabel('Data Points') 
+
+    plt.ylabel('Euclidean Distance') 
+
+    plt.title('Dendrogram') 
+
+    plt.show() 
+
+ 
+
+# Main function 
 
 def main(): 
 
-    data = list(map(int, input("Enter numbers separated by commas: ").split(','))) 
+    X = list(map(int, input("Enter data points (comma-separated): ").split(','))) 
 
-    num_bins = int(input("Enter the number of bins: ")) 
+    n_clusters = int(input("Enter the desired number of clusters: ")) 
 
      
 
-    bins = equal_frequency_binning(data, num_bins) 
+    clusters = agglomerative_clustering(X, n_clusters) 
 
-    means = bin_mean(bins) 
+    print("\nFinal Clusters:", [[X[i] for i in cluster] for cluster in clusters]) 
 
-    medians = bin_median(bins) 
-
-    boundaries = bin_boundary(bins) 
+    plot_dendrogram(X) 
 
  
 
-    print("\nBins:") 
-
-    for i, b in enumerate(bins): 
-
-        print(f"Bin {i + 1}: {b}") 
-
- 
-
-    print("\nSmoothing by Bin Mean:") 
-
-    for i, mean in enumerate(means): 
-
-        print(f"Bin {i + 1}: {[mean] * len(bins[i])}") 
-
- 
-
-    print("\nSmoothing by Bin Median:") 
-
-    for i, median in enumerate(medians): 
-
-        print(f"Bin {i + 1}: {[median] * len(bins[i])}") 
-
- 
-
-    print("\nSmoothing by Bin Boundary:") 
-
-    for i, boundary in enumerate(boundaries): 
-
-        print(f"Bin {i + 1}: {[boundary[0]] * (len(bins[i]) - 1) + [boundary[1]]}") 
-
- 
-
-    input("\nPress Enter to exit...") 
-
- 
-
-if __name__ == "__main__": 
+if _name_ == "_main_": 
 
     main() 
-
- 
